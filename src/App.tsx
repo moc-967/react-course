@@ -36,9 +36,10 @@ function App() {
   const [dotDir, setDotDir] = useState(1) // 1 = direita, -1 = esquerda
   const [dotEnergy, setDotEnergy] = useState(1) // 1 = pulo máximo, decresce
   const dotAnimRef = useRef<number | null>(null)
+  // Limites da tela
   const dotGround = 0
-  const dotMaxX = 320 // px, metade do card
-  const dotMinX = -320
+  const dotRadius = 28 // px
+  const [viewport, setViewport] = useState({ width: 800, height: 600 })
 
   useEffect(() => {
     const savedUser = getCurrentUser()
@@ -184,6 +185,16 @@ function App() {
   }
 
   // Ping pong animation logic
+  // Atualiza tamanho da viewport
+  useEffect(() => {
+    function update() {
+      setViewport({ width: window.innerWidth, height: window.innerHeight })
+    }
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
+
   const handleClick = () => {
     if (!currentUser) return
     recordUserClick(currentUser)
@@ -195,7 +206,7 @@ function App() {
     // Reinicia a animação 3D
     setDotActive(false)
     setTimeout(() => {
-      setDotX(0)
+      setDotX(viewport.width / 2)
       setDotY(0)
       setDotDir(Math.random() > 0.5 ? 1 : -1)
       setDotEnergy(1)
@@ -214,29 +225,32 @@ function App() {
     let dir = dotDir
     let energy = dotEnergy
     let vy = 0
-    let vx = 6 * dir
+    let vx = 10 * dir
     let gravity = 2.5
     let bounceLoss = 0.6
     let frame = 0
+    const minX = dotRadius
+    const maxX = viewport.width - dotRadius
+    const ground = viewport.height - 80 // 80px do chão
 
     function animate() {
       frame++
       // Movimento horizontal
       x += vx
-      if (x > dotMaxX) {
-        x = dotMaxX
+      if (x > maxX) {
+        x = maxX
         dir = -1
         vx = -vx
-      } else if (x < dotMinX) {
-        x = dotMinX
+      } else if (x < minX) {
+        x = minX
         dir = 1
         vx = -vx
       }
       // Movimento vertical
       vy += gravity
       y += vy
-      if (y > dotGround) {
-        y = dotGround
+      if (y > ground) {
+        y = ground
         if (Math.abs(vy) > 2) {
           vy = -vy * energy
           energy *= bounceLoss
@@ -244,7 +258,7 @@ function App() {
           vy = 0
           energy = 0
           setDotActive(false)
-          setDotY(0)
+          setDotY(ground)
           setDotX(x)
           setDotEnergy(0)
           return
@@ -261,7 +275,7 @@ function App() {
       if (dotAnimRef.current) cancelAnimationFrame(dotAnimRef.current)
     }
     // eslint-disable-next-line
-  }, [dotActive])
+  }, [dotActive, viewport.width, viewport.height])
 
   const isAdmin = currentAccount?.isAdmin || currentAccount?.email === 'admin@admin.com'
   const allAccounts = loadAccounts()
@@ -490,14 +504,17 @@ function App() {
           <button type="button" onClick={handleClick}>
             Você clicou {sessionClicks} vezes
           </button>
-          <span
-            className="click-dot-3d"
-            style={{
-              transform: `translateX(${dotX}px) translateY(${-dotY}px)`,
-              opacity: dotActive ? 1 : 0,
-            }}
-          />
         </div>
+
+        {/* Bolinha 3D global */}
+        <span
+          className="click-dot-3d-global"
+          style={{
+            left: dotX - 14,
+            top: dotY - 14,
+            opacity: 1,
+          }}
+        />
 
         {isAdmin ? (
           <>

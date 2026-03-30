@@ -166,21 +166,20 @@ button.secondary:hover {
   min-height: 80px;
 }
 
-.click-dot-3d {
-  position: absolute;
-  left: 50%;
-  bottom: 48px;
+.click-dot-3d-global {
+  position: fixed;
   width: 28px;
   height: 28px;
-  margin-left: -14px;
   background: radial-gradient(circle at 30% 30%, #fff 60%, #22c55e 100%);
   border-radius: 50%;
   box-shadow: 0 8px 24px #22c55e55, 0 2px 8px #0002 inset;
   border: 2px solid #16a34a;
-  z-index: 2;
+  z-index: 9999;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s;
+  left: 50vw;
+  top: 50vh;
 }
 
 .table-wrapper {
