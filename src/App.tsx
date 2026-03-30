@@ -3,10 +3,11 @@ import {
   authenticateUser,
   clearCurrentUser,
   createAccessLogEntry,
-  ensureAdminAccount,
+  createAdminAccount,
   generateRecoveryToken,
   getCurrentUser,
   getUserAccount,
+  adminAccountExists,
   recordUserClick,
   registerUser,
   resetPassword,
@@ -17,7 +18,7 @@ import {
 function App() {
   const [currentUser, setCurrentUserState] = useState<string | null>(null)
   const [currentAccount, setCurrentAccount] = useState<UserAccount | null>(null)
-  const [authMode, setAuthMode] = useState<'login' | 'register' | 'forgot' | 'reset'>('login')
+  const [authMode, setAuthMode] = useState<'login' | 'register' | 'forgot' | 'reset' | 'createAdmin'>('login')
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
@@ -25,26 +26,23 @@ function App() {
   const [message, setMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [sessionClicks, setSessionClicks] = useState(0)
+  const [adminExists, setAdminExists] = useState(false)
 
   useEffect(() => {
-    const init = async () => {
-      await ensureAdminAccount()
-      const savedUser = getCurrentUser()
-      setCurrentUserState(savedUser)
+    const savedUser = getCurrentUser()
+    setCurrentUserState(savedUser)
 
-      if (savedUser) {
-        const account = getUserAccount(savedUser)
-        if (account) {
-          setCurrentAccount(account)
-          const lastLog = account.accessLogs[account.accessLogs.length - 1]
-          setSessionClicks(lastLog?.clicks ?? 0)
-        }
+    if (savedUser) {
+      const account = getUserAccount(savedUser)
+      if (account) {
+        setCurrentAccount(account)
+        const lastLog = account.accessLogs[account.accessLogs.length - 1]
+        setSessionClicks(lastLog?.clicks ?? 0)
       }
-
-      setLoading(false)
     }
 
-    init()
+    setAdminExists(adminAccountExists())
+    setLoading(false)
   }, [])
 
   useEffect(() => {
@@ -99,6 +97,23 @@ function App() {
       clearForm()
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Erro ao registrar conta.')
+    }
+  }
+
+  const handleCreateAdmin = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setMessage(null)
+
+    try {
+      await createAdminAccount(email, password, name)
+      const normalizedEmail = email.trim().toLowerCase()
+      setCurrentUser(normalizedEmail)
+      createAccessLogEntry(normalizedEmail)
+      setCurrentUserState(normalizedEmail)
+      setAdminExists(true)
+      clearForm()
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Erro ao criar conta de administrador.')
     }
   }
 
@@ -161,6 +176,7 @@ function App() {
     const isRegister = authMode === 'register'
     const isForgot = authMode === 'forgot'
     const isReset = authMode === 'reset'
+    const isCreateAdmin = authMode === 'createAdmin'
 
     return (
       <div className="app auth-page">
@@ -168,6 +184,8 @@ function App() {
           <h1>
             {isRegister
               ? 'Criar conta'
+              : isCreateAdmin
+              ? 'Criar conta admin'
               : isForgot
               ? 'Recuperar senha'
               : isReset
@@ -177,6 +195,8 @@ function App() {
           <p>
             {isRegister
               ? 'Preencha seus dados para criar uma conta segura.'
+              : isCreateAdmin
+              ? 'Defina um e-mail e senha para o administrador da aplicação.'
               : isForgot
               ? 'Digite o e-mail da conta para gerar um código de recuperação.'
               : isReset
@@ -188,6 +208,8 @@ function App() {
             onSubmit={
               isRegister
                 ? handleRegister
+                : isCreateAdmin
+                ? handleCreateAdmin
                 : isForgot
                 ? handleSendRecovery
                 : isReset
@@ -195,7 +217,7 @@ function App() {
                 : handleLogin
             }
           >
-            {isRegister && (
+            {(isRegister || isCreateAdmin) && (
               <label>
                 Nome
                 <input
@@ -217,7 +239,7 @@ function App() {
               />
             </label>
 
-            {(!isForgot || isReset) && (
+            {(!isForgot || isReset || isCreateAdmin) && (
               <label>
                 Senha
                 <input
@@ -247,6 +269,8 @@ function App() {
             <button type="submit">
               {isRegister
                 ? 'Cadastrar'
+                : isCreateAdmin
+                ? 'Criar admin'
                 : isForgot
                 ? 'Gerar código'
                 : isReset
@@ -291,16 +315,18 @@ function App() {
               </button>
             ) : (
               <>
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={() => {
-                    setAuthMode('forgot')
-                    clearForm()
-                  }}
-                >
-                  Esqueceu a senha?
-                </button>
+                {!adminExists && (
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={() => {
+                      setAuthMode('createAdmin')
+                      clearForm()
+                    }}
+                  >
+                    Criar conta admin
+                  </button>
+                )}
                 <button
                   type="button"
                   className="secondary"

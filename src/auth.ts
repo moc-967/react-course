@@ -18,9 +18,6 @@ export interface UserAccount {
 const STORAGE_USERS_KEY = 'react-course-auth-users'
 const STORAGE_SESSION_KEY = 'react-course-auth-current-user'
 const RECOVERY_TOKEN_TTL = 1000 * 60 * 15
-const DEFAULT_ADMIN_EMAIL = 'admin@admin.com'
-const DEFAULT_ADMIN_PASSWORD = 'admin123'
-const DEFAULT_ADMIN_NAME = 'Admin'
 
 function toHex(buffer: ArrayBuffer) {
   return Array.from(new Uint8Array(buffer))
@@ -105,21 +102,27 @@ function saveAccount(account: UserAccount) {
   saveAccounts(accounts)
 }
 
-export async function ensureAdminAccount() {
-  const normalizedEmail = normalizeEmail(DEFAULT_ADMIN_EMAIL)
-  if (getUserAccount(normalizedEmail)) {
-    return
+export function adminAccountExists() {
+  return loadAccounts().some((account) => account.isAdmin)
+}
+
+export async function createAdminAccount(email: string, password: string, name = '') {
+  const accounts = loadAccounts()
+  const normalizedEmail = normalizeEmail(email)
+  if (accounts.some((account) => account.email === normalizedEmail)) {
+    throw new Error('Já existe uma conta com este e-mail.')
   }
 
-  const passwordHash = await hashPassword(DEFAULT_ADMIN_PASSWORD)
-  saveAccount({
+  const passwordHash = await hashPassword(password)
+  accounts.push({
     email: normalizedEmail,
-    name: DEFAULT_ADMIN_NAME,
+    name: name.trim() || normalizedEmail,
     passwordHash,
     totalClicks: 0,
     accessLogs: [],
     isAdmin: true,
   })
+  saveAccounts(accounts)
 }
 
 export async function registerUser(email: string, password: string, name = '') {
