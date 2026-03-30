@@ -29,8 +29,16 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [sessionClicks, setSessionClicks] = useState(0)
   const [adminExists, setAdminExists] = useState(false)
+  // Bolinha 3D ping pong
   const [dotActive, setDotActive] = useState(false)
-  const dotTimer = useRef<number | null>(null)
+  const [dotX, setDotX] = useState(0) // px
+  const [dotY, setDotY] = useState(0) // px (0 = chão)
+  const [dotDir, setDotDir] = useState(1) // 1 = direita, -1 = esquerda
+  const [dotEnergy, setDotEnergy] = useState(1) // 1 = pulo máximo, decresce
+  const dotAnimRef = useRef<number | null>(null)
+  const dotGround = 0
+  const dotMaxX = 320 // px, metade do card
+  const dotMinX = -320
 
   useEffect(() => {
     const savedUser = getCurrentUser()
@@ -175,6 +183,7 @@ function App() {
     clearForm()
   }
 
+  // Ping pong animation logic
   const handleClick = () => {
     if (!currentUser) return
     recordUserClick(currentUser)
@@ -183,16 +192,76 @@ function App() {
       setCurrentAccount(account)
       setSessionClicks((value) => value + 1)
     }
-
-    setDotActive(true)
-    if (dotTimer.current) {
-      window.clearTimeout(dotTimer.current)
-    }
-    dotTimer.current = window.setTimeout(() => {
-      setDotActive(false)
-      dotTimer.current = null
-    }, 400)
+    // Reinicia a animação 3D
+    setDotActive(false)
+    setTimeout(() => {
+      setDotX(0)
+      setDotY(0)
+      setDotDir(Math.random() > 0.5 ? 1 : -1)
+      setDotEnergy(1)
+      setDotActive(true)
+    }, 30)
   }
+
+  // Animação 3D: movimento horizontal e quique
+  useEffect(() => {
+    if (!dotActive) {
+      if (dotAnimRef.current) cancelAnimationFrame(dotAnimRef.current)
+      return
+    }
+    let x = dotX
+    let y = dotY
+    let dir = dotDir
+    let energy = dotEnergy
+    let vy = 0
+    let vx = 6 * dir
+    let gravity = 2.5
+    let bounceLoss = 0.6
+    let frame = 0
+
+    function animate() {
+      frame++
+      // Movimento horizontal
+      x += vx
+      if (x > dotMaxX) {
+        x = dotMaxX
+        dir = -1
+        vx = -vx
+      } else if (x < dotMinX) {
+        x = dotMinX
+        dir = 1
+        vx = -vx
+      }
+      // Movimento vertical
+      vy += gravity
+      y += vy
+      if (y > dotGround) {
+        y = dotGround
+        if (Math.abs(vy) > 2) {
+          vy = -vy * energy
+          energy *= bounceLoss
+        } else {
+          vy = 0
+          energy = 0
+          setDotActive(false)
+          setDotY(0)
+          setDotX(x)
+          setDotEnergy(0)
+          return
+        }
+      }
+      setDotX(x)
+      setDotY(y)
+      setDotDir(dir)
+      setDotEnergy(energy)
+      dotAnimRef.current = requestAnimationFrame(animate)
+    }
+    dotAnimRef.current = requestAnimationFrame(animate)
+    return () => {
+      if (dotAnimRef.current) cancelAnimationFrame(dotAnimRef.current)
+    }
+    // eslint-disable-next-line
+  }, [dotActive])
 
   const isAdmin = currentAccount?.isAdmin || currentAccount?.email === 'admin@admin.com'
   const allAccounts = loadAccounts()
@@ -421,7 +490,13 @@ function App() {
           <button type="button" onClick={handleClick}>
             Você clicou {sessionClicks} vezes
           </button>
-          <span className={`click-dot ${dotActive ? 'bounce' : ''}`} />
+          <span
+            className="click-dot-3d"
+            style={{
+              transform: `translateX(${dotX}px) translateY(${-dotY}px)`,
+              opacity: dotActive ? 1 : 0,
+            }}
+          />
         </div>
 
         {isAdmin ? (

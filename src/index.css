@@ -159,40 +159,28 @@ button.secondary:hover {
   border-radius: 16px;
 }
 
+
 .click-card {
   position: relative;
   overflow: visible;
+  min-height: 80px;
 }
 
-.click-dot {
+.click-dot-3d {
   position: absolute;
-  top: -10px;
-  right: -10px;
-  width: 14px;
-  height: 14px;
-  background: #22c55e;
+  left: 50%;
+  bottom: 48px;
+  width: 28px;
+  height: 28px;
+  margin-left: -14px;
+  background: radial-gradient(circle at 30% 30%, #fff 60%, #22c55e 100%);
   border-radius: 50%;
+  box-shadow: 0 8px 24px #22c55e55, 0 2px 8px #0002 inset;
+  border: 2px solid #16a34a;
+  z-index: 2;
   opacity: 0;
-  transform: translateY(0);
-}
-
-.click-dot.bounce {
-  opacity: 1;
-  animation: bounce 0.4s ease;
-}
-
-@keyframes bounce {
-  0%, 100% {
-    transform: translateY(0);
-  }
-
-  25% {
-    transform: translateY(-8px);
-  }
-
-  50% {
-    transform: translateY(0);
-  }
+  pointer-events: none;
+  transition: opacity 0.2s;
 }
 
 .table-wrapper {
