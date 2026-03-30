@@ -223,28 +223,34 @@ export function validateRecoveryToken(email: string, token: string) {
   return account.recoveryToken === token.trim()
 }
 
-// Simula a resposta de um provedor externo
-function getProviderProfile(provider: SocialProvider) {
+
+// Ponto único para obter o perfil do usuário autenticado via OAuth
+// Troque a implementação deste método para integrar com a API real do Google, Apple, etc.
+// Exemplo de uso futuro: chamar window.gapi, Apple JS SDK, etc.
+export async function getOAuthProfile(provider: SocialProvider): Promise<{ email: string; name: string }> {
+  // --- INTEGRAÇÃO REAL: Substitua este bloco pelo fluxo OAuth real ---
   if (provider === 'google') {
-    return {
+    // Aqui você pode chamar a API do Google e retornar o perfil real
+    return Promise.resolve({
       email: 'usuario.google@gmail.com',
       name: 'Usuário Google',
-    }
+    })
   }
   if (provider === 'apple') {
-    return {
+    return Promise.resolve({
       email: 'usuario.apple@icloud.com',
       name: 'Usuário Apple',
-    }
+    })
   }
-  return {
+  return Promise.resolve({
     email: 'usuario.microsoft@outlook.com',
     name: 'Usuário Microsoft',
-  }
+  })
+  // --- FIM INTEGRAÇÃO REAL ---
 }
 
-export function loginWithProvider(provider: SocialProvider) {
-  const profile = getProviderProfile(provider)
+export async function loginWithProvider(provider: SocialProvider) {
+  const profile = await getOAuthProfile(provider)
   const normalizedEmail = normalizeEmail(profile.email)
   let account = getUserAccount(normalizedEmail)
 

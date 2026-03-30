@@ -125,7 +125,7 @@ function App() {
     setMessage(null)
 
     try {
-      const providerEmail = loginWithProvider(provider)
+      const providerEmail = await loginWithProvider(provider)
       setCurrentUser(providerEmail)
       createAccessLogEntry(providerEmail)
       setCurrentUserState(providerEmail)
