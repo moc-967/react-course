@@ -223,22 +223,40 @@ export function validateRecoveryToken(email: string, token: string) {
   return account.recoveryToken === token.trim()
 }
 
+// Simula a resposta de um provedor externo
+function getProviderProfile(provider: SocialProvider) {
+  if (provider === 'google') {
+    return {
+      email: 'usuario.google@gmail.com',
+      name: 'Usuário Google',
+    }
+  }
+  if (provider === 'apple') {
+    return {
+      email: 'usuario.apple@icloud.com',
+      name: 'Usuário Apple',
+    }
+  }
+  return {
+    email: 'usuario.microsoft@outlook.com',
+    name: 'Usuário Microsoft',
+  }
+}
+
 export function loginWithProvider(provider: SocialProvider) {
-  const normalizedProvider = normalizeEmail(provider)
-  const providerEmail = `${normalizedProvider}@provider.com`
-  let account = getUserAccount(providerEmail)
+  const profile = getProviderProfile(provider)
+  const normalizedEmail = normalizeEmail(profile.email)
+  let account = getUserAccount(normalizedEmail)
+
+  // Se já existe um admin com este e-mail, mantém nome/email originais
+  if (account && account.isAdmin) {
+    return account.email
+  }
 
   if (!account) {
-    const providerName =
-      provider === 'google'
-        ? 'Google User'
-        : provider === 'apple'
-        ? 'Apple User'
-        : 'Microsoft User'
-
     account = {
-      email: providerEmail,
-      name: providerName,
+      email: normalizedEmail,
+      name: profile.name,
       passwordHash: '',
       totalClicks: 0,
       accessLogs: [],
