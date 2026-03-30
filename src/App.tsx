@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   authenticateUser,
   clearCurrentUser,
@@ -9,6 +9,7 @@ import {
   getUserAccount,
   adminAccountExists,
   loadAccounts,
+  loginWithProvider,
   recordUserClick,
   registerUser,
   resetPassword,
@@ -28,6 +29,8 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [sessionClicks, setSessionClicks] = useState(0)
   const [adminExists, setAdminExists] = useState(false)
+  const [dotActive, setDotActive] = useState(false)
+  const dotTimer = useRef<number | null>(null)
 
   useEffect(() => {
     const savedUser = getCurrentUser()
@@ -118,6 +121,21 @@ function App() {
     }
   }
 
+  const handleSocialLogin = async (provider: 'google' | 'apple' | 'microsoft') => {
+    setMessage(null)
+
+    try {
+      const providerEmail = loginWithProvider(provider)
+      setCurrentUser(providerEmail)
+      createAccessLogEntry(providerEmail)
+      setCurrentUserState(providerEmail)
+      setAuthMode('login')
+      clearForm()
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Erro ao autenticar com o provedor.')
+    }
+  }
+
   const handleSendRecovery = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setMessage(null)
@@ -165,6 +183,15 @@ function App() {
       setCurrentAccount(account)
       setSessionClicks((value) => value + 1)
     }
+
+    setDotActive(true)
+    if (dotTimer.current) {
+      window.clearTimeout(dotTimer.current)
+    }
+    dotTimer.current = window.setTimeout(() => {
+      setDotActive(false)
+      dotTimer.current = null
+    }, 400)
   }
 
   const isAdmin = currentAccount?.isAdmin || currentAccount?.email === 'admin@admin.com'
@@ -284,6 +311,25 @@ function App() {
             </button>
           </form>
 
+          {authMode === 'login' && (
+            <div className="auth-actions social-login-actions">
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => handleSocialLogin('google')}
+              >
+                Continuar com Google
+              </button>
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => handleSocialLogin('apple')}
+              >
+                Continuar com Apple
+              </button>
+            </div>
+          )}
+
           <div className="auth-actions">
             {isRegister ? (
               <button
@@ -365,10 +411,11 @@ function App() {
 
         <p>Use este projeto para treinar componentes, estado e hooks.</p>
 
-        <div className="card">
+        <div className="card click-card">
           <button type="button" onClick={handleClick}>
             Você clicou {sessionClicks} vezes
           </button>
+          <span className={`click-dot ${dotActive ? 'bounce' : ''}`} />
         </div>
 
         {isAdmin ? (
@@ -404,7 +451,8 @@ function App() {
               <section>
                 <h3>Usuários que acessaram a app</h3>
                 {accessedAccounts.length ? (
-                  <table className="access-log-table">
+                  <div className="table-wrapper">
+                    <table className="access-log-table">
                     <thead>
                       <tr>
                         <th>E-mail</th>
@@ -424,6 +472,7 @@ function App() {
                       ))}
                     </tbody>
                   </table>
+                </div>
                 ) : (
                   <p>Nenhum usuário acessou a aplicação ainda.</p>
                 )}
@@ -433,7 +482,8 @@ function App() {
             <section>
               <h2>Registro de acessos</h2>
               {currentAccount?.accessLogs.length ? (
-                <table className="access-log-table">
+                <div className="table-wrapper">
+                  <table className="access-log-table">
                   <thead>
                     <tr>
                       <th>Data / Hora</th>
@@ -450,7 +500,8 @@ function App() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                  </table>
+                </div>
               ) : (
                 <p>Seu acesso ainda não foi registrado. Faça login para iniciar o primeiro registro.</p>
               )}
@@ -458,7 +509,7 @@ function App() {
           </>
         ) : (
           <div className="card">
-            <p>Você não tem permissão para ver as estatísticas e o registro de acessos.</p>
+            <p>Continue clicando para aumentar seu contador e acompanhar sua evolução!</p>
           </div>
         )}
       </main>

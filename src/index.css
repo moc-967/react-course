@@ -112,13 +112,56 @@ button.secondary:hover {
 
 .stats-block {
   flex: 1 1 160px;
+  min-width: 0;
   background: #f1f5f9;
   padding: 1rem;
   border-radius: 16px;
 }
 
+.click-card {
+  position: relative;
+  overflow: visible;
+}
+
+.click-dot {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 14px;
+  height: 14px;
+  background: #22c55e;
+  border-radius: 50%;
+  opacity: 0;
+  transform: translateY(0);
+}
+
+.click-dot.bounce {
+  opacity: 1;
+  animation: bounce 0.4s ease;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+
+  25% {
+    transform: translateY(-8px);
+  }
+
+  50% {
+    transform: translateY(0);
+  }
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  margin-top: 1rem;
+}
+
 .access-log-table {
   width: 100%;
+  min-width: 640px;
   border-collapse: collapse;
   margin-top: 1rem;
 }

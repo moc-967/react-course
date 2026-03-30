@@ -4,6 +4,8 @@ export interface AccessLogEntry {
   totalClicksAfterSession: number
 }
 
+export type SocialProvider = 'google' | 'apple' | 'microsoft'
+
 export interface UserAccount {
   email: string
   name: string
@@ -219,6 +221,33 @@ export function validateRecoveryToken(email: string, token: string) {
   }
 
   return account.recoveryToken === token.trim()
+}
+
+export function loginWithProvider(provider: SocialProvider) {
+  const normalizedProvider = normalizeEmail(provider)
+  const providerEmail = `${normalizedProvider}@provider.com`
+  let account = getUserAccount(providerEmail)
+
+  if (!account) {
+    const providerName =
+      provider === 'google'
+        ? 'Google User'
+        : provider === 'apple'
+        ? 'Apple User'
+        : 'Microsoft User'
+
+    account = {
+      email: providerEmail,
+      name: providerName,
+      passwordHash: '',
+      totalClicks: 0,
+      accessLogs: [],
+      isAdmin: false,
+    }
+    saveAccount(account)
+  }
+
+  return account.email
 }
 
 export async function resetPassword(email: string, token: string, newPassword: string) {
