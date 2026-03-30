@@ -62,3 +62,120 @@ button {
 button:hover {
   background: #1d4ed8;
 }
+
+.auth-page main {
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+label {
+  display: block;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+input {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  margin-top: 0.5rem;
+}
+
+.auth-message {
+  margin: 1rem 0;
+  color: #b91c1c;
+}
+
+button.secondary {
+  margin-top: 1rem;
+  background: #64748b;
+}
+
+button.secondary:hover {
+  background: #475569;
+}
+
+.auth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.stats-row {
+  display: flex;
+  gap: 1rem;
+  margin: 1.5rem 0;
+  flex-wrap: wrap;
+}
+
+.stats-block {
+  flex: 1 1 160px;
+  background: #f1f5f9;
+  padding: 1rem;
+  border-radius: 16px;
+}
+
+.access-log-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.access-log-table th,
+.access-log-table td {
+  text-align: left;
+  padding: 0.85rem 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.access-log-table th {
+  color: #334155;
+  font-weight: 700;
+}
+
+.access-log-table td {
+  color: #475569;
+}
+
+.auth-page main {
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+label {
+  display: block;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+input {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  margin-top: 0.5rem;
+}
+
+.auth-message {
+  margin: 1rem 0;
+  color: #b91c1c;
+}
+
+button.secondary {
+  margin-top: 1rem;
+  background: #64748b;
+}
+
+button.secondary:hover {
+  background: #475569;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
