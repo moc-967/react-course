@@ -10,6 +10,7 @@ export interface UserAccount {
   passwordHash: string
   totalClicks: number
   accessLogs: AccessLogEntry[]
+  isAdmin?: boolean
   recoveryToken?: string
   recoveryTokenExpiry?: number
 }
@@ -17,6 +18,9 @@ export interface UserAccount {
 const STORAGE_USERS_KEY = 'react-course-auth-users'
 const STORAGE_SESSION_KEY = 'react-course-auth-current-user'
 const RECOVERY_TOKEN_TTL = 1000 * 60 * 15
+const DEFAULT_ADMIN_EMAIL = 'admin@admin.com'
+const DEFAULT_ADMIN_PASSWORD = 'admin123'
+const DEFAULT_ADMIN_NAME = 'Admin'
 
 function toHex(buffer: ArrayBuffer) {
   return Array.from(new Uint8Array(buffer))
@@ -42,6 +46,7 @@ function ensureAccountDefaults(account: Partial<UserAccount>): UserAccount {
             typeof entry?.totalClicksAfterSession === 'number' ? entry.totalClicksAfterSession : 0,
         }))
       : [],
+    isAdmin: account.isAdmin ?? false,
     recoveryToken: account.recoveryToken,
     recoveryTokenExpiry:
       typeof account.recoveryTokenExpiry === 'number' ? account.recoveryTokenExpiry : undefined,
@@ -100,6 +105,23 @@ function saveAccount(account: UserAccount) {
   saveAccounts(accounts)
 }
 
+export async function ensureAdminAccount() {
+  const normalizedEmail = normalizeEmail(DEFAULT_ADMIN_EMAIL)
+  if (getUserAccount(normalizedEmail)) {
+    return
+  }
+
+  const passwordHash = await hashPassword(DEFAULT_ADMIN_PASSWORD)
+  saveAccount({
+    email: normalizedEmail,
+    name: DEFAULT_ADMIN_NAME,
+    passwordHash,
+    totalClicks: 0,
+    accessLogs: [],
+    isAdmin: true,
+  })
+}
+
 export async function registerUser(email: string, password: string, name = '') {
   const accounts = loadAccounts()
   const normalizedEmail = normalizeEmail(email)
@@ -114,6 +136,7 @@ export async function registerUser(email: string, password: string, name = '') {
     passwordHash,
     totalClicks: 0,
     accessLogs: [],
+    isAdmin: false,
   })
   saveAccounts(accounts)
 }

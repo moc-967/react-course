@@ -3,6 +3,7 @@ import {
   authenticateUser,
   clearCurrentUser,
   createAccessLogEntry,
+  ensureAdminAccount,
   generateRecoveryToken,
   getCurrentUser,
   getUserAccount,
@@ -26,19 +27,24 @@ function App() {
   const [sessionClicks, setSessionClicks] = useState(0)
 
   useEffect(() => {
-    const savedUser = getCurrentUser()
-    setCurrentUserState(savedUser)
+    const init = async () => {
+      await ensureAdminAccount()
+      const savedUser = getCurrentUser()
+      setCurrentUserState(savedUser)
 
-    if (savedUser) {
-      const account = getUserAccount(savedUser)
-      if (account) {
-        setCurrentAccount(account)
-        const lastLog = account.accessLogs[account.accessLogs.length - 1]
-        setSessionClicks(lastLog?.clicks ?? 0)
+      if (savedUser) {
+        const account = getUserAccount(savedUser)
+        if (account) {
+          setCurrentAccount(account)
+          const lastLog = account.accessLogs[account.accessLogs.length - 1]
+          setSessionClicks(lastLog?.clicks ?? 0)
+        }
       }
+
+      setLoading(false)
     }
 
-    setLoading(false)
+    init()
   }, [])
 
   useEffect(() => {
@@ -101,9 +107,11 @@ function App() {
     setMessage(null)
 
     try {
-      const token = generateRecoveryToken(email)
-      setRecoveryCode(token)
-      setMessage('Código de recuperação gerado. Use-o para redefinir sua senha.')
+      generateRecoveryToken(email)
+      setRecoveryCode('')
+      setMessage(
+        'Um código de recuperação foi enviado para o seu e-mail cadastrado. Verifique sua caixa de entrada.'
+      )
       setAuthMode('reset')
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Erro ao gerar código de recuperação.')
@@ -142,6 +150,8 @@ function App() {
       setSessionClicks((value) => value + 1)
     }
   }
+
+  const isAdmin = currentAccount?.isAdmin || currentAccount?.email === 'admin@admin.com'
 
   if (loading) {
     return <div className="app">Carregando...</div>
@@ -324,48 +334,56 @@ function App() {
 
         <p>Use este projeto para treinar componentes, estado e hooks.</p>
 
-        <div className="stats-row">
-          <div className="stats-block">
-            <strong>Total de cliques desde a conta foi criada</strong>
-            <p>{currentAccount?.totalClicks ?? 0}</p>
-          </div>
-          <div className="stats-block">
-            <strong>Cliques nesta sessão</strong>
-            <p>{sessionClicks}</p>
-          </div>
-        </div>
+        {isAdmin ? (
+          <>
+            <div className="stats-row">
+              <div className="stats-block">
+                <strong>Total de cliques desde a conta foi criada</strong>
+                <p>{currentAccount?.totalClicks ?? 0}</p>
+              </div>
+              <div className="stats-block">
+                <strong>Cliques nesta sessão</strong>
+                <p>{sessionClicks}</p>
+              </div>
+            </div>
 
-        <div className="card">
-          <button type="button" onClick={handleClick}>
-            Você clicou {sessionClicks} vezes
-          </button>
-        </div>
+            <div className="card">
+              <button type="button" onClick={handleClick}>
+                Você clicou {sessionClicks} vezes
+              </button>
+            </div>
 
-        <section>
-          <h2>Registro de acessos</h2>
-          {currentAccount?.accessLogs.length ? (
-            <table className="access-log-table">
-              <thead>
-                <tr>
-                  <th>Data / Hora</th>
-                  <th>Cliques</th>
-                  <th>Total após acesso</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[...currentAccount.accessLogs].reverse().map((entry, index) => (
-                  <tr key={`${entry.timestamp}-${index}`}>
-                    <td>{new Date(entry.timestamp).toLocaleString('pt-BR')}</td>
-                    <td>{entry.clicks}</td>
-                    <td>{entry.totalClicksAfterSession}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p>Seu acesso ainda não foi registrado. Faça login para iniciar o primeiro registro.</p>
-          )}
-        </section>
+            <section>
+              <h2>Registro de acessos</h2>
+              {currentAccount?.accessLogs.length ? (
+                <table className="access-log-table">
+                  <thead>
+                    <tr>
+                      <th>Data / Hora</th>
+                      <th>Cliques</th>
+                      <th>Total após acesso</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...currentAccount.accessLogs].reverse().map((entry, index) => (
+                      <tr key={`${entry.timestamp}-${index}`}>
+                        <td>{new Date(entry.timestamp).toLocaleString('pt-BR')}</td>
+                        <td>{entry.clicks}</td>
+                        <td>{entry.totalClicksAfterSession}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <p>Seu acesso ainda não foi registrado. Faça login para iniciar o primeiro registro.</p>
+              )}
+            </section>
+          </>
+        ) : (
+          <div className="card">
+            <p>Você não tem permissão para ver as estatísticas e o registro de acessos.</p>
+          </div>
+        )}
       </main>
     </div>
   )
