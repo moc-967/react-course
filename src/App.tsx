@@ -8,6 +8,7 @@ import {
   getCurrentUser,
   getUserAccount,
   adminAccountExists,
+  loadAccounts,
   recordUserClick,
   registerUser,
   resetPassword,
@@ -167,6 +168,10 @@ function App() {
   }
 
   const isAdmin = currentAccount?.isAdmin || currentAccount?.email === 'admin@admin.com'
+  const allAccounts = loadAccounts()
+  const accessedAccounts = allAccounts.filter((account) => account.accessLogs.length > 0)
+  const totalClicksAll = allAccounts.reduce((sum, account) => sum + account.totalClicks, 0)
+  const totalAccessSessions = accessedAccounts.reduce((sum, account) => sum + account.accessLogs.length, 0)
 
   if (loading) {
     return <div className="app">Carregando...</div>
@@ -360,6 +365,12 @@ function App() {
 
         <p>Use este projeto para treinar componentes, estado e hooks.</p>
 
+        <div className="card">
+          <button type="button" onClick={handleClick}>
+            Você clicou {sessionClicks} vezes
+          </button>
+        </div>
+
         {isAdmin ? (
           <>
             <div className="stats-row">
@@ -373,11 +384,51 @@ function App() {
               </div>
             </div>
 
-            <div className="card">
-              <button type="button" onClick={handleClick}>
-                Você clicou {sessionClicks} vezes
-              </button>
-            </div>
+            <section>
+              <h2>Visão geral dos usuários</h2>
+              <div className="stats-row">
+                <div className="stats-block">
+                  <strong>Total de usuários</strong>
+                  <p>{allAccounts.length}</p>
+                </div>
+                <div className="stats-block">
+                  <strong>Usuários com acesso</strong>
+                  <p>{accessedAccounts.length}</p>
+                </div>
+                <div className="stats-block">
+                  <strong>Total de cliques de todos</strong>
+                  <p>{totalClicksAll}</p>
+                </div>
+              </div>
+
+              <section>
+                <h3>Usuários que acessaram a app</h3>
+                {accessedAccounts.length ? (
+                  <table className="access-log-table">
+                    <thead>
+                      <tr>
+                        <th>E-mail</th>
+                        <th>Nome</th>
+                        <th>Cliques totais</th>
+                        <th>Registros de sessão</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {accessedAccounts.map((account) => (
+                        <tr key={account.email}>
+                          <td>{account.email}</td>
+                          <td>{account.name}</td>
+                          <td>{account.totalClicks}</td>
+                          <td>{account.accessLogs.length}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <p>Nenhum usuário acessou a aplicação ainda.</p>
+                )}
+              </section>
+            </section>
 
             <section>
               <h2>Registro de acessos</h2>
